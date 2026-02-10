@@ -1,0 +1,35 @@
+{
+    "name": "ecommerce_pipeline",
+    "comment": "End-to-end e-commerce data pipeline: Bronze -> Silver -> Gold",
+    "clusters": [
+        {
+            "label": "default",
+            "autoscale": {
+                "min_workers": 1,
+                "max_workers": 3
+            }
+        }
+    ],
+    "libraries": [
+        {"notebook": {"path": "/Repos/<your-username>/databricks-de-associate-project/04_delta_live_tables/01_dlt_bronze"}},
+        {"notebook": {"path": "/Repos/<your-username>/databricks-de-associate-project/04_delta_live_tables/02_dlt_silver"}},
+        {"notebook": {"path": "/Repos/<your-username>/databricks-de-associate-project/04_delta_live_tables/03_dlt_gold"}}
+    ],
+    "target": "ecommerce_dlt",
+    "continuous": false,
+    "development": true,
+    "channel": "CURRENT",
+    "edition": "ADVANCED",
+    "photon": true,
+    "configuration": {
+        "raw_orders_path": "dbfs:/FileStore/ecommerce_project/raw/orders",
+        "raw_customers_path": "dbfs:/FileStore/ecommerce_project/raw/customers",
+        "raw_products_path": "dbfs:/FileStore/ecommerce_project/raw/products"
+    },
+    "_exam_notes": {
+        "development_mode": "development=true allows iterative development without affecting production. Exam may ask about dev vs prod mode.",
+        "continuous_vs_triggered": "continuous=false means triggered mode (run once). continuous=true keeps the pipeline running.",
+        "edition": "ADVANCED edition supports expectations. CORE edition does not.",
+        "target": "The target database/schema where DLT tables are created."
+    }
+}

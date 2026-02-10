@@ -1,0 +1,114 @@
+{
+    "_description": "This JSON represents a Databricks Workflow (Job) configuration. Use it as a reference for creating your workflow in the Databricks UI or via the Jobs API.",
+
+    "name": "ecommerce_daily_pipeline",
+    "tags": {
+        "project": "ecommerce",
+        "environment": "prod"
+    },
+
+    "tasks": [
+        {
+            "task_key": "ingest_orders",
+            "description": "Bronze: Ingest raw order files via Auto Loader",
+            "notebook_task": {
+                "notebook_path": "/Repos/user/databricks-de-associate-project/01_bronze_ingestion/02_autoloader_orders",
+                "base_parameters": {
+                    "environment": "prod"
+                }
+            },
+            "new_cluster": {
+                "spark_version": "13.3.x-scala2.12",
+                "num_workers": 2,
+                "node_type_id": "i3.xlarge"
+            },
+            "_exam_note": "This uses a JOB CLUSTER (new_cluster), not an all-purpose cluster. Job clusters are cheaper and auto-terminate."
+        },
+        {
+            "task_key": "ingest_customers",
+            "description": "Bronze: Ingest raw customer files",
+            "notebook_task": {
+                "notebook_path": "/Repos/user/databricks-de-associate-project/01_bronze_ingestion/03_autoloader_customers",
+                "base_parameters": {
+                    "environment": "prod"
+                }
+            },
+            "new_cluster": {
+                "spark_version": "13.3.x-scala2.12",
+                "num_workers": 1,
+                "node_type_id": "i3.xlarge"
+            },
+            "_exam_note": "This task runs IN PARALLEL with ingest_orders because it has no depends_on."
+        },
+        {
+            "task_key": "transform_silver",
+            "description": "Silver: Clean, deduplicate, and enrich",
+            "depends_on": [
+                {"task_key": "ingest_orders"},
+                {"task_key": "ingest_customers"}
+            ],
+            "notebook_task": {
+                "notebook_path": "/Repos/user/databricks-de-associate-project/02_silver_transformation/01_clean_orders",
+                "base_parameters": {
+                    "environment": "prod",
+                    "mode": "incremental"
+                }
+            },
+            "new_cluster": {
+                "spark_version": "13.3.x-scala2.12",
+                "num_workers": 4,
+                "node_type_id": "i3.xlarge"
+            },
+            "_exam_note": "depends_on means this task waits for BOTH ingestion tasks to complete before starting."
+        },
+        {
+            "task_key": "aggregate_gold",
+            "description": "Gold: Build business aggregates",
+            "depends_on": [
+                {"task_key": "transform_silver"}
+            ],
+            "notebook_task": {
+                "notebook_path": "/Repos/user/databricks-de-associate-project/03_gold_aggregation/01_daily_revenue"
+            },
+            "new_cluster": {
+                "spark_version": "13.3.x-scala2.12",
+                "num_workers": 2,
+                "node_type_id": "i3.xlarge"
+            }
+        },
+        {
+            "task_key": "quality_check",
+            "description": "Validate data quality across all layers",
+            "depends_on": [
+                {"task_key": "aggregate_gold"}
+            ],
+            "notebook_task": {
+                "notebook_path": "/Repos/user/databricks-de-associate-project/02_silver_transformation/05_silver_validation"
+            },
+            "existing_cluster_id": "optional-cluster-id",
+            "_exam_note": "existing_cluster_id uses an all-purpose cluster. This is fine for lightweight tasks but NOT recommended for production."
+        }
+    ],
+
+    "schedule": {
+        "quartz_cron_expression": "0 0 6 * * ?",
+        "timezone_id": "America/New_York",
+        "_exam_note": "This runs daily at 6:00 AM Eastern. Know that Workflows support cron scheduling."
+    },
+
+    "email_notifications": {
+        "on_failure": ["data-team@example.com"],
+        "on_success": [],
+        "no_alert_for_skipped_runs": true
+    },
+
+    "max_concurrent_runs": 1,
+    "retry_on_timeout": false,
+
+    "_exam_notes": {
+        "task_dependencies": "Tasks with depends_on run after their dependencies complete. Tasks without depends_on can run in parallel.",
+        "job_clusters_vs_all_purpose": "Job clusters (new_cluster) are created per task and auto-terminate. All-purpose clusters (existing_cluster_id) persist.",
+        "retry_policies": "Individual tasks can have retry policies. The exam tests whether you know where to configure retries.",
+        "max_concurrent_runs": "Setting this to 1 prevents overlapping pipeline runs."
+    }
+}
