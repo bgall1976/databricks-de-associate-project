@@ -164,3 +164,89 @@ Low-cardinality columns should use partitioning instead.
 **RESTORE**: Actually reverts the table to a previous version (creates a new version that looks like the old one)
 
 The exam may ask which to use when you need to "undo" a bad write (answer: RESTORE).
+
+---
+
+## 16. Choosing Between CTAS, INSERT INTO, and INSERT OVERWRITE
+
+| Command | Behavior | Use When |
+|---|---|---|
+| `CREATE OR REPLACE TABLE ... AS SELECT` | Drops and recreates the table | Full refresh from scratch |
+| `INSERT INTO` | Appends rows to existing table | Adding new data (may create duplicates) |
+| `INSERT OVERWRITE` | Replaces partitions/data in table | Replacing specific partitions |
+| `MERGE INTO` | Upserts (update + insert) | Dedup, SCD Type 1, incremental loads |
+
+The exam often presents a scenario and asks which command is appropriate. Pay attention to whether the question says "replace," "append," "update existing," or "create."
+
+---
+
+## 17. Confusing Struct, Array, and Map Access Syntax
+
+This is one of the most common traps:
+
+| Data Type | Access Syntax | Example |
+|---|---|---|
+| **Struct** | Dot notation | `address.city` |
+| **Map** | Bracket notation | `address['city']` |
+| **Array** | Index or EXPLODE | `items[0]` or `EXPLODE(items)` |
+
+The exam will give you a column and ask how to access a nested field. You must know the column's data type to choose the correct syntax. Dot notation on a map or bracket notation on a struct will fail.
+
+---
+
+## 18. VACUUM + Time Travel Interaction
+
+**Critical sequence to understand:**
+
+1. Table has versions 1-20
+2. You run `VACUUM RETAIN 168 HOURS` (default)
+3. Files for versions older than 7 days are deleted
+4. Time travel to those old versions NOW FAILS
+
+**Exam trap:** A question may describe running VACUUM and then ask if a time travel query will succeed. If the version is older than the retention period, the answer is NO.
+
+**Double trap:** Running `VACUUM RETAIN 0 HOURS` requires setting `delta.retentionDurationCheck.enabled = false` first — Databricks won't let you vacuum below the safety threshold by default.
+
+---
+
+## 19. DLT Pipeline Development vs Execution
+
+**Cannot do interactively:**
+- Run DLT notebooks with the "Run" button
+- Test `@dlt.table` decorators in a regular notebook
+
+**Can do:**
+- Define DLT tables in notebooks, then run as a DLT pipeline via Workflows UI
+- View DLT pipeline results and data quality metrics in the pipeline UI
+
+The exam may present a scenario where someone tries to test a DLT notebook interactively and ask why it fails.
+
+---
+
+## 20. Auto Loader: Schema Location vs Checkpoint Location
+
+These are TWO DIFFERENT things:
+
+| Setting | Purpose | Configured Via |
+|---|---|---|
+| **Schema location** | Stores inferred/evolved schema | `.option("cloudFiles.schemaLocation", path)` |
+| **Checkpoint location** | Stores streaming progress state | `.option("checkpointLocation", path)` on writeStream |
+
+Both are required. Schema location is an Auto Loader option (on the read side). Checkpoint location is a streaming option (on the write side). Confusing these is a common exam mistake.
+
+---
+
+## 21. "When in Doubt" Rules for the Exam
+
+If you're stuck on a question, these heuristics align with how Databricks designs exam answers:
+
+1. **Ingestion at scale** → Auto Loader (not COPY INTO, not spark.read)
+2. **Production cluster** → Job cluster (not all-purpose)
+3. **Upsert/dedup** → MERGE INTO (not INSERT or DELETE+INSERT)
+4. **Data quality in pipeline** → DLT expectations (not manual WHERE clauses)
+5. **PII masking** → Dynamic views with `is_member()` (not separate tables)
+6. **Undo bad write** → `RESTORE TABLE` (not time travel SELECT)
+7. **File compaction** → `OPTIMIZE` (not repartition or manual rewrite)
+8. **Declarative pipeline** → DLT (not manual Workflow orchestration)
+9. **Parameterize notebook** → `dbutils.widgets` (not environment variables)
+10. **Git integration** → Databricks Repos (not CLI or Connect)

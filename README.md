@@ -4,6 +4,8 @@
 
 A comprehensive, hands-on project designed to teach every domain tested on the Databricks Data Engineer Associate certification exam. Build an end-to-end data pipeline using Databricks-native tools and best practices.
 
+> **📝 NEW: 90+ Exam Scenario Questions** — Each phase README and the exam_prep folder now include scenario-based questions and answers in the format used on the actual certification exam. See the [Exam Prep Guide](exam_prep/README.md) for a complete index.
+
 ---
 
 ## Exam Domains Covered
@@ -133,10 +135,10 @@ databricks-de-associate-project/
 │   └── 04_git_integration.md          # Guide to Repos and CI/CD
 │
 └── exam_prep/
-    ├── README.md                      # Final exam prep strategy
-    ├── practice_questions.md          # Practice questions mapped to project phases
+    ├── README.md                      # Final exam prep strategy + scenario question index
+    ├── practice_questions.md          # 45 practice questions (incl. 15 scenario-based)
     ├── key_concepts_cheatsheet.md     # Quick reference for exam day
-    └── common_mistakes.md             # Gotchas and frequently missed topics
+    └── common_mistakes.md             # 21 gotchas, tricky patterns, & "when in doubt" rules
 ```
 
 ---
@@ -162,8 +164,11 @@ Phase 4 (`04_delta_live_tables/`) rebuilds Phases 1-3 using Delta Live Tables, t
 ### Step 5: Apply Governance and Optimize
 Phases 5 and 6 cover Unity Catalog, optimization, and production workflows.
 
-### Step 6: Exam Prep
-Use the `exam_prep/` folder to review, test yourself, and identify weak areas.
+### Step 6: Practice Scenario Questions
+Each phase README now includes **exam-style scenario questions** — the format most commonly used on the actual certification exam. Work through these after completing each phase.
+
+### Step 7: Final Exam Prep
+Use the `exam_prep/` folder for the comprehensive question bank (45 questions), cheatsheet, and common mistakes guide. See `exam_prep/README.md` for a full preparation strategy.
 
 ---
 
